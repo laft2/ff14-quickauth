@@ -6,7 +6,7 @@ pub mod domain;
 pub mod application;
 
 // Infrastructure layer: concrete implementations (keyring, totp-rs, win32).
-// pub mod infrastructure;
+pub mod infrastructure;
 
 // Presentation layer: Tauri commands wiring everything together.
 // pub mod presentation;

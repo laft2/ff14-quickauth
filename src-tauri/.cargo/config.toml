@@ -1,0 +1,4 @@
+[test]
+# Keyring integration tests write to Windows Credential Manager;
+# running them single-threaded prevents concurrent key conflicts.
+test-threads = 1
