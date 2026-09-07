@@ -135,9 +135,8 @@ pub fn run() {
 
                             if let Some((_l_hwnd, rect)) = find_main_launcher_window() {
                                 let l_width = rect.right - rect.left;
-                                let l_height = rect.bottom - rect.top;
                                 let overlay_x = rect.left + (l_width - 260) / 2;
-                                let overlay_y = rect.top + (l_height / 3);
+                                let overlay_y = rect.top + 35;
 
                                 let handle_clone = handle.clone();
                                 let _ = handle.run_on_main_thread(move || {
