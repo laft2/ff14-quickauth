@@ -4,7 +4,10 @@ node = "lts"
 
 [tasks.build]
 description = "Tauri Windowsリリースバイナリおよびインストーラーをビルドします"
-run = "cargo tauri build"
+run = [
+  "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prebuild.ps1",
+  "cargo tauri build"
+]
 
 [tasks.install]
 description = "アプリをリリースビルドし、Windowsスタートメニューにショートカットを登録します"
