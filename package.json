@@ -1,0 +1,16 @@
+{
+  "name": "ff14-companion",
+  "version": "0.1.0",
+  "description": "FF14 Steam launcher credential companion",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@tauri-apps/api": "^2",
+    "vite": "^6"
+  }
+}

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FF14 Companion — パスワードマネージャー</title>
+  <meta name="description" content="FF14 Steam版ランチャーの認証を補完する専用パスワードマネージャー" />
+  <link rel="stylesheet" href="/src/styles/main.css" />
+</head>
+<body>
+  <div class="app" id="app">
+
+    <!-- ── Header ────────────────────────────────────────────────── -->
+    <header class="header">
+      <div class="header__logo">⚔️</div>
+      <div>
+        <div class="header__title">FF14 Companion</div>
+        <div class="header__subtitle">認証補完マネージャー</div>
+      </div>
+    </header>
+
+    <!-- ── Main ──────────────────────────────────────────────────── -->
+    <main style="flex:1; padding: 24px 28px; max-width: 480px; width: 100%; margin: 0 auto;">
+
+      <!-- Tab Nav -->
+      <nav class="tab-nav" role="tablist">
+        <button class="tab-nav__item active" id="tab-credential" role="tab"
+                aria-selected="true" aria-controls="panel-credential">
+          🔑 認証情報
+        </button>
+        <button class="tab-nav__item" id="tab-settings" role="tab"
+                aria-selected="false" aria-controls="panel-settings">
+          ⚙️ 設定
+        </button>
+      </nav>
+
+      <!-- ── Panel: Credential ───────────────────────────────────── -->
+      <section id="panel-credential" class="animate-in" role="tabpanel">
+
+        <!-- TOTP Card (visible only when seed is saved) -->
+        <div class="card" id="totp-card" style="display:none; margin-bottom:20px; text-align:center;">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:16px;">
+            現在のワンタイムパスワード
+          </div>
+          <div class="totp-ring">
+            <div style="position:relative; width:100px; height:100px;">
+              <svg class="totp-ring__svg" viewBox="0 0 100 100" width="100" height="100" aria-hidden="true">
+                <circle class="totp-ring__track" cx="50" cy="50" r="44"/>
+                <circle class="totp-ring__progress" id="totp-ring-progress"
+                        cx="50" cy="50" r="44"
+                        stroke-dasharray="276.46"
+                        stroke-dashoffset="0"/>
+              </svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                <div class="totp-ring__code" id="totp-code-display">------</div>
+                <div class="totp-ring__label" id="totp-remaining-display">-- 秒</div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:12px;">
+            <button class="btn btn--ghost" id="btn-copy-totp" style="font-size:12px;padding:6px 14px;">
+              📋 コピー
+            </button>
+          </div>
+        </div>
+
+        <!-- Credential Form -->
+        <div class="card">
+          <h1 style="font-size:16px;font-weight:700;margin-bottom:20px;color:var(--text-primary);">
+            認証情報の登録
+          </h1>
+
+          <form id="form-credential" novalidate>
+            <div class="form-group">
+              <label for="input-account-name">アカウント名（メモ用）</label>
+              <input type="text" id="input-account-name" name="account_name"
+                     placeholder="例: FF14 メインアカウント"
+                     autocomplete="off" spellcheck="false" />
+            </div>
+
+            <div class="form-group">
+              <label for="input-password">パスワード</label>
+              <div class="input-wrap">
+                <input type="password" id="input-password" name="password"
+                       placeholder="Square Enixのパスワード"
+                       autocomplete="current-password" />
+                <button type="button" class="input-wrap__toggle" id="btn-toggle-pass"
+                        aria-label="パスワードを表示/非表示">
+                  👁
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="input-totp-seed">
+                ワンタイムパスワードシード
+                <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);">（任意・Base32）</span>
+              </label>
+              <div class="input-wrap">
+                <input type="password" id="input-totp-seed" name="totp_seed"
+                       placeholder="JBSWY3DPEHPK3PXP..."
+                       autocomplete="off" spellcheck="false" />
+                <button type="button" class="input-wrap__toggle" id="btn-toggle-seed"
+                        aria-label="シードを表示/非表示">
+                  👁
+                </button>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div style="display:flex;gap:10px;">
+              <button type="submit" class="btn btn--primary" id="btn-save" style="flex:1;">
+                💾 保存
+              </button>
+              <button type="button" class="btn btn--danger" id="btn-delete">
+                🗑
+              </button>
+            </div>
+
+            <div class="status" id="status-credential" role="alert" aria-live="polite"></div>
+          </form>
+        </div>
+
+        <!-- Manual autofill button -->
+        <div style="margin-top:16px;text-align:center;">
+          <button class="btn btn--ghost btn--full" id="btn-manual-fill"
+                  style="animation: pulse-gold 2s infinite;" disabled>
+            🚀 今すぐランチャーに入力
+          </button>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">
+            FF14ランチャーを起動してから押してください
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Panel: Settings ─────────────────────────────────────── -->
+      <section id="panel-settings" class="animate-in" style="display:none;" role="tabpanel">
+        <div class="card">
+          <h2 style="font-size:16px;font-weight:700;margin-bottom:20px;">設定</h2>
+
+          <label class="toggle" for="toggle-auto-submit" style="margin-bottom:20px;">
+            <span class="toggle__label">
+              <strong style="display:block;color:var(--text-primary);margin-bottom:2px;">
+                Enter 自動送信
+              </strong>
+              パスワードとOTP入力後に自動でログインを実行する
+            </span>
+            <div class="toggle__track" id="toggle-auto-submit" role="switch"
+                 aria-checked="false" tabindex="0">
+              <div class="toggle__thumb"></div>
+            </div>
+          </label>
+
+          <div class="divider"></div>
+
+          <div style="font-size:12px;color:var(--text-muted);line-height:1.7;">
+            <p style="margin-bottom:8px;">
+              📁 認証情報は <strong style="color:var(--text-secondary);">Windows 資格情報マネージャー (DPAPI)</strong>
+              で暗号化されて保存されます。
+            </p>
+            <p>
+              🔒 パスワードはメモリ上でゼロ埋め消去されます。
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ── Footer ────────────────────────────────────────────────── -->
+    <footer style="padding:12px 28px;border-top:1px solid var(--border-subtle);
+                   display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:11px;color:var(--text-muted);">FF14 Companion v0.1.0</span>
+      <span id="launcher-status" style="font-size:11px;color:var(--text-muted);">
+        ⬤ ランチャー未検出
+      </span>
+    </footer>
+
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

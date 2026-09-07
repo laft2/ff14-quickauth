@@ -1,5 +1,9 @@
 # Rust build artifacts
 /target/
+/src-tauri/target/
 
-# Cargo lock for libraries (keep for applications)
-# Cargo.lock
+# Node
+node_modules/
+dist/
+.DS_Store
+

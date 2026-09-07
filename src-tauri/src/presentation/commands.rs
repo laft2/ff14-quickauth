@@ -126,6 +126,46 @@ pub fn set_auto_submit(state: State<AppState>, enabled: bool) {
     state.auto_submit.store(enabled, Ordering::Relaxed);
 }
 
+#[tauri::command]
+pub fn trigger_autofill(state: State<AppState>) -> Result<(), String> {
+    trigger_autofill_inner(&state)
+}
+
+pub fn trigger_autofill_inner(state: &AppState) -> Result<(), String> {
+    use crate::infrastructure::win32::input;
+    use secrecy::ExposeSecret;
+
+    let cred = state
+        .credential_service
+        .load()
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| "認証情報が登録されていません".to_string())?;
+
+    // 1. Send password
+    input::send_string(cred.password().expose_secret(), None)
+        .map_err(|e| format!("パスワード入力失敗: {e}"))?;
+
+    // 2. Tab to OTP field
+    input::send_tab(None).map_err(|e| format!("Tab送信失敗: {e}"))?;
+
+    // 3. Send TOTP if seed is registered
+    if let Some(seed) = cred.totp_seed() {
+        let totp = state
+            .totp_service
+            .generate(seed.expose_secret())
+            .map_err(|e| e.to_string())?;
+        input::send_string(totp.code(), None)
+            .map_err(|e| format!("OTP入力失敗: {e}"))?;
+    }
+
+    // 4. Auto-submit Enter if enabled
+    if state.auto_submit.load(Ordering::Relaxed) {
+        input::send_enter(None).map_err(|e| format!("Enter送信失敗: {e}"))?;
+    }
+
+    Ok(())
+}
+
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -315,5 +355,16 @@ mod tests {
 
         let result = delete_credential_inner(&state);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn trigger_autofill_inner_errors_when_no_credential() {
+        let mut repo = MockCredentialRepository::new();
+        repo.expect_load().returning(|| Ok(None));
+        let state = make_state(repo, MockTotpProvider::new());
+
+        let result = trigger_autofill_inner(&state);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("認証情報"));
     }
 }
