@@ -3,7 +3,7 @@
 pub mod domain;
 
 // Application layer: use-cases and service interfaces (traits).
-// pub mod application;
+pub mod application;
 
 // Infrastructure layer: concrete implementations (keyring, totp-rs, win32).
 // pub mod infrastructure;
