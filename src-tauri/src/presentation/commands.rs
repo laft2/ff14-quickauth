@@ -153,8 +153,15 @@ pub fn trigger_autofill(state: State<AppState>) -> Result<(), String> {
 }
 
 pub fn trigger_autofill_inner(state: &AppState) -> Result<(), String> {
-    use crate::infrastructure::win32::input;
+    use crate::infrastructure::win32::{input, watcher};
     use secrecy::ExposeSecret;
+
+    // 0. Find and focus FF14 launcher window
+    if let Some(hwnd) = watcher::find_launcher_hwnd() {
+        let _ = watcher::focus_launcher_window(hwnd);
+    } else {
+        return Err("FF14ランチャーのウィンドウが見つかりません。ランチャーを起動してからお試しください。".to_string());
+    }
 
     let cred = state
         .credential_service
@@ -164,7 +171,7 @@ pub fn trigger_autofill_inner(state: &AppState) -> Result<(), String> {
 
     // 1. Send password
     input::send_string(cred.password().expose_secret(), None)
-        .map_err(|e| format!("パスワード入力失敗: {e}"))?;
+        .map_err(|e| format!("パスワード入力失敗: {e}。ランチャーが管理者権限で起動している場合は本アプリも「管理者として実行」してください。"))?;
 
     // 2. Tab to OTP field
     input::send_tab(None).map_err(|e| format!("Tab送信失敗: {e}"))?;
@@ -386,6 +393,6 @@ mod tests {
 
         let result = trigger_autofill_inner(&state);
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("認証情報"));
+        assert!(result.unwrap_err().contains("FF14ランチャー"));
     }
 }

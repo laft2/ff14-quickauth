@@ -1,14 +1,13 @@
-/// Win32 `SetWinEventHook` based launcher process watcher.
-///
-/// Monitors `EVENT_SYSTEM_FOREGROUND` events to detect when the FF14
-/// launcher (`ffxivlauncher64.exe`) becomes the foreground window.
-/// Uses `WINEVENT_OUTOFCONTEXT` so no DLL injection is needed.
-use windows::Win32::Foundation::HWND;
+use windows::core::BOOL;
+use windows::Win32::Foundation::{HWND, LPARAM};
 use windows::Win32::System::Threading::{
-    OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
-    PROCESS_QUERY_LIMITED_INFORMATION,
+    AttachThreadInput, GetCurrentThreadId, OpenProcess, QueryFullProcessImageNameW,
+    PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
-use windows::Win32::UI::WindowsAndMessaging::GetWindowThreadProcessId;
+use windows::Win32::UI::WindowsAndMessaging::{
+    BringWindowToTop, EnumWindows, GetWindowThreadProcessId, IsIconic, IsWindowVisible,
+    SetForegroundWindow, ShowWindow, SW_RESTORE,
+};
 
 /// Process names that identify the FF14 launcher.
 pub const LAUNCHER_PROCESS_NAMES: &[&str] = &[
@@ -16,6 +15,7 @@ pub const LAUNCHER_PROCESS_NAMES: &[&str] = &[
     "ffxivlauncher.exe",
     "ffxivboot64.exe",
     "ffxivboot.exe",
+    "xivlauncher.exe",
 ];
 
 /// Returns `true` if the given executable name matches the FF14 launcher.
@@ -24,6 +24,57 @@ pub fn is_ff14_launcher(exe_name: &str) -> bool {
     LAUNCHER_PROCESS_NAMES
         .iter()
         .any(|&name| lower.ends_with(name))
+}
+
+/// Finds the HWND of the active FF14 Launcher window.
+pub fn find_launcher_hwnd() -> Option<HWND> {
+    struct Context {
+        found_hwnd: Option<HWND>,
+    }
+    let mut ctx = Context { found_hwnd: None };
+
+    unsafe extern "system" fn enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
+        let ctx = &mut *(lparam.0 as *mut Context);
+        if IsWindowVisible(hwnd).as_bool() {
+            if let Some(exe_path) = get_process_exe_path(hwnd) {
+                if is_ff14_launcher(&exe_path) {
+                    ctx.found_hwnd = Some(hwnd);
+                    return BOOL(0);
+                }
+            }
+        }
+        BOOL(1)
+    }
+
+    unsafe {
+        let _ = EnumWindows(Some(enum_proc), LPARAM(&mut ctx as *mut Context as isize));
+    }
+    ctx.found_hwnd
+}
+
+/// Restores and brings the launcher window to foreground.
+pub fn focus_launcher_window(hwnd: HWND) -> Result<(), String> {
+    unsafe {
+        if IsIconic(hwnd).as_bool() {
+            let _ = ShowWindow(hwnd, SW_RESTORE);
+        }
+
+        let mut pid: u32 = 0;
+        let target_thread = GetWindowThreadProcessId(hwnd, Some(&mut pid));
+        let current_thread = GetCurrentThreadId();
+
+        if target_thread != 0 && current_thread != target_thread {
+            let _ = AttachThreadInput(current_thread, target_thread, true);
+            let _ = BringWindowToTop(hwnd);
+            let _ = SetForegroundWindow(hwnd);
+            let _ = AttachThreadInput(current_thread, target_thread, false);
+        } else {
+            let _ = BringWindowToTop(hwnd);
+            let _ = SetForegroundWindow(hwnd);
+        }
+    }
+    std::thread::sleep(std::time::Duration::from_millis(200));
+    Ok(())
 }
 
 /// Retrieves the full executable path for the process owning `hwnd`.

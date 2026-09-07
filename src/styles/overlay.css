@@ -1,0 +1,72 @@
+:root {
+  --c-bg: rgba(15, 23, 42, 0.88);
+  --c-border: rgba(245, 158, 11, 0.4);
+  --c-gold-400: #fbbf24;
+}
+
+body {
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.overlay-card {
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
+  background: var(--c-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 0 15px rgba(245, 158, 11, 0.2);
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 8px;
+  animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.overlay-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.35));
+  border: 1px solid rgba(245, 158, 11, 0.6);
+  border-radius: 8px;
+  color: #fff;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.overlay-btn:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.4), rgba(217, 119, 6, 0.55));
+  border-color: var(--c-gold-400);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.overlay-btn:active {
+  transform: translateY(1px);
+}
+
+.overlay-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.overlay-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}

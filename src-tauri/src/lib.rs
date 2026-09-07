@@ -130,9 +130,38 @@ pub fn run() {
                         if is_detected && !was_detected {
                             was_detected = true;
                             let _ = handle.emit("launcher-detected", ());
+
+                            let handle_clone = handle.clone();
+                            let _ = handle.run_on_main_thread(move || {
+                                use tauri::WebviewWindowBuilder;
+                                if let Some(overlay) = handle_clone.get_webview_window("overlay") {
+                                    let _ = overlay.show();
+                                    let _ = overlay.set_always_on_top(true);
+                                } else {
+                                    let _ = WebviewWindowBuilder::new(
+                                        &handle_clone,
+                                        "overlay",
+                                        tauri::WebviewUrl::App("overlay.html".into()),
+                                    )
+                                    .title("FF14 Companion Overlay")
+                                    .inner_size(260.0, 70.0)
+                                    .decorations(false)
+                                    .transparent(true)
+                                    .always_on_top(true)
+                                    .resizable(false)
+                                    .build();
+                                }
+                            });
                         } else if !is_detected && was_detected {
                             was_detected = false;
                             let _ = handle.emit("launcher-closed", ());
+
+                            let handle_clone = handle.clone();
+                            let _ = handle.run_on_main_thread(move || {
+                                if let Some(overlay) = handle_clone.get_webview_window("overlay") {
+                                    let _ = overlay.hide();
+                                }
+                            });
                         }
                     }
                 });

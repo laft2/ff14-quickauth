@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FF14 Companion Overlay</title>
+  <link rel="stylesheet" href="/src/styles/overlay.css" />
+</head>
+<body style="background: transparent; margin: 0; overflow: hidden;">
+  <div class="overlay-card" id="overlay-card">
+    <button class="overlay-btn" id="btn-autofill">
+      <span style="font-size:20px;">⚔️</span>
+      <span style="display:flex; flex-direction:column;">
+        <strong style="font-size:13px; color:#fff;">FF14に自動入力</strong>
+        <span id="totp-preview" style="font-size:11px; color:#fbbf24;">TOTP: ------</span>
+      </span>
+    </button>
+    <button class="overlay-close" id="btn-close" title="閉じる">✕</button>
+  </div>
+  <script type="module" src="/src/overlay.js"></script>
+</body>
+</html>
