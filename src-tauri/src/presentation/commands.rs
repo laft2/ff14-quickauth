@@ -169,24 +169,27 @@ pub fn trigger_autofill_inner(state: &AppState) -> Result<(), String> {
         .map_err(|e| e.to_string())?
         .ok_or_else(|| "認証情報が登録されていません".to_string())?;
 
-    // 1. Send password
-    input::send_string(cred.password().expose_secret(), None)
+    // 1. Reset focus from any field (e.g. OTP field) back to Password field
+    let _ = input::reset_focus_to_password_field(None);
+
+    // 2. Clear any existing text in Password field (Ctrl+A -> Backspace) and send password
+    input::send_clear_and_type(cred.password().expose_secret(), None)
         .map_err(|e| format!("パスワード入力失敗: {e}。ランチャーが管理者権限で起動している場合は本アプリも「管理者として実行」してください。"))?;
 
-    // 2. Tab to OTP field
+    // 3. Tab to OTP field
     input::send_tab(None).map_err(|e| format!("Tab送信失敗: {e}"))?;
 
-    // 3. Send TOTP if seed is registered
+    // 4. Clear any existing text in OTP field and send TOTP if seed is registered
     if let Some(seed) = cred.totp_seed() {
         let totp = state
             .totp_service
             .generate(seed.expose_secret())
             .map_err(|e| e.to_string())?;
-        input::send_string(totp.code(), None)
+        input::send_clear_and_type(totp.code(), None)
             .map_err(|e| format!("OTP入力失敗: {e}"))?;
     }
 
-    // 4. Auto-submit Enter if enabled
+    // 5. Auto-submit Enter if enabled
     if state.auto_submit.load(Ordering::Relaxed) {
         input::send_enter(None).map_err(|e| format!("Enter送信失敗: {e}"))?;
     }

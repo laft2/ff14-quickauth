@@ -4,8 +4,8 @@
 /// hardware keyboard events. This is the same mechanism used by
 /// KeePassXC Auto-Type and 1Password.
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    SendInput, INPUT, INPUT_KEYBOARD, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, VK_RETURN, VK_TAB,
-    VIRTUAL_KEY,
+    SendInput, INPUT, INPUT_KEYBOARD, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, VK_BACK, VK_CONTROL,
+    VK_RETURN, VK_SHIFT, VK_TAB, VIRTUAL_KEY,
 };
 
 /// Delay between each character input (milliseconds).
@@ -13,9 +13,6 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
 const INTER_KEY_DELAY_MS: u64 = 20;
 
 /// Send a string as simulated keystrokes to the foreground window.
-///
-/// Each character is sent as a Unicode key-down + key-up pair.
-/// A configurable inter-key delay is applied after each character.
 pub fn send_string(text: &str, delay_ms: Option<u64>) -> Result<(), String> {
     let delay = delay_ms.unwrap_or(INTER_KEY_DELAY_MS);
     for ch in text.chars() {
@@ -31,6 +28,57 @@ pub fn send_tab(delay_ms: Option<u64>) -> Result<(), String> {
     send_virtual_key(VK_TAB)?;
     std::thread::sleep(std::time::Duration::from_millis(delay));
     Ok(())
+}
+
+/// Send Shift+Tab to move focus backward.
+pub fn send_shift_tab(delay_ms: Option<u64>) -> Result<(), String> {
+    let delay = delay_ms.unwrap_or(INTER_KEY_DELAY_MS);
+    let inputs = [
+        make_vk_input(VK_SHIFT, false),
+        make_vk_input(VK_TAB, false),
+        make_vk_input(VK_TAB, true),
+        make_vk_input(VK_SHIFT, true),
+    ];
+    send_inputs(&inputs)?;
+    std::thread::sleep(std::time::Duration::from_millis(delay));
+    Ok(())
+}
+
+/// Send Ctrl+A to select all text in the current field.
+pub fn send_select_all(delay_ms: Option<u64>) -> Result<(), String> {
+    let delay = delay_ms.unwrap_or(INTER_KEY_DELAY_MS);
+    let inputs = [
+        make_vk_input(VK_CONTROL, false),
+        make_vk_input(VIRTUAL_KEY(b'A' as u16), false),
+        make_vk_input(VIRTUAL_KEY(b'A' as u16), true),
+        make_vk_input(VK_CONTROL, true),
+    ];
+    send_inputs(&inputs)?;
+    std::thread::sleep(std::time::Duration::from_millis(delay));
+    Ok(())
+}
+
+/// Send a Backspace key press.
+pub fn send_backspace(delay_ms: Option<u64>) -> Result<(), String> {
+    let delay = delay_ms.unwrap_or(INTER_KEY_DELAY_MS);
+    send_virtual_key(VK_BACK)?;
+    std::thread::sleep(std::time::Duration::from_millis(delay));
+    Ok(())
+}
+
+/// Clears any existing text in the current input box (Ctrl+A -> Backspace) and types new text.
+pub fn send_clear_and_type(text: &str, delay_ms: Option<u64>) -> Result<(), String> {
+    let _ = send_select_all(delay_ms);
+    let _ = send_backspace(delay_ms);
+    send_string(text, delay_ms)
+}
+
+/// Resets keyboard focus from any field to the Password field.
+pub fn reset_focus_to_password_field(delay_ms: Option<u64>) -> Result<(), String> {
+    for _ in 0..3 {
+        let _ = send_shift_tab(delay_ms);
+    }
+    send_tab(delay_ms)
 }
 
 /// Send a single Enter key press.
