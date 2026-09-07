@@ -1,4 +1,4 @@
-[test]
+[env]
 # Keyring integration tests write to Windows Credential Manager;
 # running them single-threaded prevents concurrent key conflicts.
-test-threads = 1
+RUST_TEST_THREADS = "1"
