@@ -1,12 +1,12 @@
 use windows::core::BOOL;
-use windows::Win32::Foundation::{HWND, LPARAM};
+use windows::Win32::Foundation::{HWND, LPARAM, RECT};
 use windows::Win32::System::Threading::{
     AttachThreadInput, GetCurrentThreadId, OpenProcess, QueryFullProcessImageNameW,
     PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    BringWindowToTop, EnumWindows, GetWindowThreadProcessId, IsIconic, IsWindowVisible,
-    SetForegroundWindow, ShowWindow, SW_RESTORE,
+    BringWindowToTop, EnumWindows, GetWindowRect, GetWindowThreadProcessId, IsIconic,
+    IsWindowVisible, SetForegroundWindow, ShowWindow, SW_RESTORE,
 };
 
 /// Process names that identify the FF14 launcher.
@@ -26,20 +26,36 @@ pub fn is_ff14_launcher(exe_name: &str) -> bool {
         .any(|&name| lower.ends_with(name))
 }
 
-/// Finds the HWND of the active FF14 Launcher window.
-pub fn find_launcher_hwnd() -> Option<HWND> {
+/// Finds the main visible FF14 Launcher window (ignoring small splash dialogs) and returns its HWND and RECT.
+pub fn find_main_launcher_window() -> Option<(HWND, RECT)> {
     struct Context {
-        found_hwnd: Option<HWND>,
+        best_hwnd: Option<HWND>,
+        best_rect: RECT,
+        max_area: i32,
     }
-    let mut ctx = Context { found_hwnd: None };
+    let mut ctx = Context {
+        best_hwnd: None,
+        best_rect: RECT::default(),
+        max_area: 0,
+    };
 
     unsafe extern "system" fn enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
         let ctx = &mut *(lparam.0 as *mut Context);
         if IsWindowVisible(hwnd).as_bool() {
             if let Some(exe_path) = get_process_exe_path(hwnd) {
                 if is_ff14_launcher(&exe_path) {
-                    ctx.found_hwnd = Some(hwnd);
-                    return BOOL(0);
+                    let mut rect = RECT::default();
+                    if GetWindowRect(hwnd, &mut rect).is_ok() {
+                        let width = rect.right - rect.left;
+                        let height = rect.bottom - rect.top;
+                        let area = width * height;
+                        // Ignore small splash/dialog windows (width < 350 or height < 200)
+                        if width >= 350 && height >= 200 && area > ctx.max_area {
+                            ctx.max_area = area;
+                            ctx.best_hwnd = Some(hwnd);
+                            ctx.best_rect = rect;
+                        }
+                    }
                 }
             }
         }
@@ -49,7 +65,17 @@ pub fn find_launcher_hwnd() -> Option<HWND> {
     unsafe {
         let _ = EnumWindows(Some(enum_proc), LPARAM(&mut ctx as *mut Context as isize));
     }
-    ctx.found_hwnd
+
+    if let Some(hwnd) = ctx.best_hwnd {
+        Some((hwnd, ctx.best_rect))
+    } else {
+        None
+    }
+}
+
+/// Finds the HWND of the active FF14 Launcher window.
+pub fn find_launcher_hwnd() -> Option<HWND> {
+    find_main_launcher_window().map(|(hwnd, _)| hwnd)
 }
 
 /// Restores and brings the launcher window to foreground.

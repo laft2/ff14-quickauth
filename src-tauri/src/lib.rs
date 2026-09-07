@@ -115,7 +115,7 @@ pub fn run() {
                 let handle = app.handle().clone();
                 std::thread::spawn(move || {
                     use crate::infrastructure::win32::watcher::{
-                        get_process_exe_path, is_ff14_launcher,
+                        find_main_launcher_window, get_process_exe_path, is_ff14_launcher,
                     };
                     use windows::Win32::UI::WindowsAndMessaging::GetForegroundWindow;
 
@@ -127,32 +127,48 @@ pub fn run() {
                             .map(|path| is_ff14_launcher(&path))
                             .unwrap_or(false);
 
-                        if is_detected && !was_detected {
-                            was_detected = true;
-                            let _ = handle.emit("launcher-detected", ());
+                        if is_detected {
+                            if !was_detected {
+                                was_detected = true;
+                                let _ = handle.emit("launcher-detected", ());
+                            }
 
-                            let handle_clone = handle.clone();
-                            let _ = handle.run_on_main_thread(move || {
-                                use tauri::WebviewWindowBuilder;
-                                if let Some(overlay) = handle_clone.get_webview_window("overlay") {
-                                    let _ = overlay.show();
-                                    let _ = overlay.set_always_on_top(true);
-                                } else {
-                                    let _ = WebviewWindowBuilder::new(
-                                        &handle_clone,
-                                        "overlay",
-                                        tauri::WebviewUrl::App("overlay.html".into()),
-                                    )
-                                    .title("FF14 Companion Overlay")
-                                    .inner_size(260.0, 70.0)
-                                    .decorations(false)
-                                    .transparent(true)
-                                    .always_on_top(true)
-                                    .resizable(false)
-                                    .build();
-                                }
-                            });
-                        } else if !is_detected && was_detected {
+                            if let Some((_l_hwnd, rect)) = find_main_launcher_window() {
+                                let l_width = rect.right - rect.left;
+                                let l_height = rect.bottom - rect.top;
+                                let overlay_x = rect.left + (l_width - 260) / 2;
+                                let overlay_y = rect.top + (l_height / 3);
+
+                                let handle_clone = handle.clone();
+                                let _ = handle.run_on_main_thread(move || {
+                                    use tauri::{PhysicalPosition, WebviewWindowBuilder};
+                                    let pos = PhysicalPosition::new(overlay_x, overlay_y);
+
+                                    if let Some(overlay) = handle_clone.get_webview_window("overlay") {
+                                        let _ = overlay.set_position(pos);
+                                        let _ = overlay.show();
+                                        let _ = overlay.set_always_on_top(true);
+                                    } else {
+                                        if let Ok(overlay) = WebviewWindowBuilder::new(
+                                            &handle_clone,
+                                            "overlay",
+                                            tauri::WebviewUrl::App("overlay.html".into()),
+                                        )
+                                        .title("FF14 Companion Overlay")
+                                        .inner_size(260.0, 70.0)
+                                        .position(overlay_x as f64, overlay_y as f64)
+                                        .decorations(false)
+                                        .transparent(true)
+                                        .always_on_top(true)
+                                        .resizable(false)
+                                        .build()
+                                        {
+                                            let _ = overlay.set_position(pos);
+                                        }
+                                    }
+                                });
+                            }
+                        } else if was_detected {
                             was_detected = false;
                             let _ = handle.emit("launcher-closed", ());
 
