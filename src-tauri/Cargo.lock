@@ -835,6 +835,8 @@ dependencies = [
 name = "ff14-companion"
 version = "0.1.0"
 dependencies = [
+ "base32",
+ "base64 0.22.1",
  "keyring",
  "log",
  "mockall",

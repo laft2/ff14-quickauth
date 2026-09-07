@@ -1,3 +1,5 @@
+import jsQR from 'jsqr';
+
 /**
  * FF14 Companion — Main Frontend
  *
@@ -30,6 +32,9 @@ async function invoke(cmd, args) {
     generate_totp: () => ({ code: '123456', remaining_seconds: 20 }),
     get_auto_submit: () => false,
     set_auto_submit: () => undefined,
+    parse_totp_input: () => [
+      { secret_base32: 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ', name: 'FF14 Main', issuer: 'Square Enix' }
+    ],
   };
   const fn = stubs[cmd];
   if (!fn) throw new Error(`Unknown command: ${cmd}`);
@@ -235,6 +240,106 @@ function setupCopyTotp() {
   });
 }
 
+// ── TOTP Seed & QR Parser ──────────────────────────────────────────────────────
+async function applyTotpText(text) {
+  const statusEl = el('status-credential');
+  try {
+    const accounts = /** @type {Array<{secret_base32: string, name?: string, issuer?: string}>} */ (
+      await invoke('parse_totp_input', { input: text })
+    );
+    if (!accounts || accounts.length === 0) {
+      showStatus(statusEl, 'error', '❌ 有効なTOTPシードを検出できませんでした');
+      return;
+    }
+    const target = accounts[0];
+    el('input-totp-seed').value = target.secret_base32;
+    if (target.name && !el('input-account-name').value.trim()) {
+      el('input-account-name').value = target.name;
+    }
+    showStatus(statusEl, 'success', `✅ TOTPシードを読み込みました (${target.name || '抽出成功'})`);
+  } catch (e) {
+    showStatus(statusEl, 'error', `❌ QR/シード解析エラー: ${e}`);
+  }
+}
+
+function processQrImageFile(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, img.width, img.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code && code.data) {
+        applyTotpText(code.data);
+      } else {
+        showStatus(el('status-credential'), 'error', '❌ 画像からQRコードを読み取れませんでした');
+      }
+    };
+    img.src = String(e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+function setupQrScanner() {
+  const btnScan = el('btn-scan-qr');
+  const fileInput = /** @type {HTMLInputElement} */ (el('input-qr-file'));
+
+  btnScan.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files && fileInput.files[0]) {
+      processQrImageFile(fileInput.files[0]);
+    }
+    fileInput.value = '';
+  });
+
+  // Paste handler for QR image or migration URL
+  document.addEventListener('paste', (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const blob = item.getAsFile();
+        if (blob) {
+          e.preventDefault();
+          processQrImageFile(blob);
+          return;
+        }
+      }
+    }
+
+    const pastedText = e.clipboardData?.getData('text');
+    if (pastedText && (pastedText.startsWith('otpauth-migration://') || pastedText.startsWith('otpauth://'))) {
+      e.preventDefault();
+      applyTotpText(pastedText);
+    }
+  });
+
+  // Drag and drop QR image onto window
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const files = e.dataTransfer?.files;
+    if (files && files[0] && files[0].type.startsWith('image/')) {
+      processQrImageFile(files[0]);
+    }
+  });
+
+  // Auto-parse on seed input blur if starts with otpauth
+  el('input-totp-seed').addEventListener('change', () => {
+    const val = /** @type {HTMLInputElement} */ (el('input-totp-seed')).value.trim();
+    if (val.startsWith('otpauth-migration://') || val.startsWith('otpauth://')) {
+      applyTotpText(val);
+    }
+  });
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   // Tab navigation
@@ -250,8 +355,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupVisibilityToggle('btn-toggle-pass', 'input-password');
   setupVisibilityToggle('btn-toggle-seed', 'input-totp-seed');
 
-  // Copy TOTP
+  // Copy TOTP & QR scanner
   setupCopyTotp();
+  setupQrScanner();
 
   // Auto-submit toggle
   setupToggle(el('toggle-auto-submit'), 'get_auto_submit', 'set_auto_submit');

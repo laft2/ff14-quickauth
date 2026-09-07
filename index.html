@@ -98,12 +98,21 @@
               </label>
               <div class="input-wrap">
                 <input type="password" id="input-totp-seed" name="totp_seed"
-                       placeholder="JBSWY3DPEHPK3PXP..."
+                       placeholder="Base32シード または otpauth-migration://..."
                        autocomplete="off" spellcheck="false" />
                 <button type="button" class="input-wrap__toggle" id="btn-toggle-seed"
                         aria-label="シードを表示/非表示">
                   👁
                 </button>
+              </div>
+              <div style="margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:11px; color:var(--text-muted);">
+                  Google AuthenticatorのQR画像/URL貼り付け対応
+                </span>
+                <button type="button" class="btn btn--ghost" id="btn-scan-qr" style="font-size:11px; padding:4px 10px;">
+                  📷 QR読み込み
+                </button>
+                <input type="file" id="input-qr-file" accept="image/*" style="display:none;" />
               </div>
             </div>
 

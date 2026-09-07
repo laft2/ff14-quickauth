@@ -21,8 +21,8 @@ pub fn run() {
     };
     use crate::presentation::{
         commands::{
-            delete_credential, generate_totp, get_auto_submit, get_credential, save_credential,
-            set_auto_submit, trigger_autofill,
+            delete_credential, generate_totp, get_auto_submit, get_credential, parse_totp_input,
+            save_credential, set_auto_submit, trigger_autofill,
         },
         state::AppState,
     };
@@ -49,6 +49,7 @@ pub fn run() {
             get_auto_submit,
             set_auto_submit,
             trigger_autofill,
+            parse_totp_input,
         ])
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {

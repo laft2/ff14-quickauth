@@ -126,6 +126,27 @@ pub fn set_auto_submit(state: State<AppState>, enabled: bool) {
     state.auto_submit.store(enabled, Ordering::Relaxed);
 }
 
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ParsedTotpAccountDto {
+    pub secret_base32: String,
+    pub name: Option<String>,
+    pub issuer: Option<String>,
+}
+
+#[tauri::command]
+pub fn parse_totp_input(input: String) -> Result<Vec<ParsedTotpAccountDto>, String> {
+    use crate::domain::totp_parser;
+    totp_parser::parse_totp_input(&input).map(|list| {
+        list.into_iter()
+            .map(|acc| ParsedTotpAccountDto {
+                secret_base32: acc.secret_base32,
+                name: acc.name,
+                issuer: acc.issuer,
+            })
+            .collect()
+    })
+}
+
 #[tauri::command]
 pub fn trigger_autofill(state: State<AppState>) -> Result<(), String> {
     trigger_autofill_inner(&state)

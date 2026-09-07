@@ -29,6 +29,8 @@ thiserror = "2"
 
 # TOTP generation (RFC 6238)
 totp-rs = { version = "5", features = ["serde_support", "zeroize"] }
+base32 = "0.5"
+base64 = "0.22"
 
 # Secure credential storage (Windows Credential Manager / DPAPI)
 keyring = { version = "3", features = ["windows-native"] }
