@@ -17,3 +17,12 @@ run = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register-shor
 [tasks.uninstall]
 description = "Windowsスタートメニューからショートカットを削除します"
 run = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/unregister-shortcut.ps1"
+
+[tasks."startup:enable"]
+description = "Windowsのスタートアップフォルダにショートカットを追加し、ログイン時自動起動を有効化します"
+run = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register-startup.ps1"
+
+[tasks."startup:disable"]
+description = "Windowsのスタートアップフォルダからショートカットを削除し、ログイン時自動起動を無効化します"
+run = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/unregister-startup.ps1"
+
