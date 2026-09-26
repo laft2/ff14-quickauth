@@ -192,19 +192,24 @@ function switchTab(activeId) {
 
 // ── Toggle switch ─────────────────────────────────────────────────────────────
 function setupToggle(trackEl, getCmd, setCmd) {
-  let state = false;
+  const storageKey = setCmd.replace(/^set_/, '');
+  const saved = localStorage.getItem(storageKey);
+  let state = saved !== null ? saved === 'true' : false;
 
-  async function refresh() {
-    state = await invoke(getCmd);
+  async function syncState() {
     trackEl.classList.toggle('on', state);
     trackEl.setAttribute('aria-checked', String(state));
+    try {
+      await invoke(setCmd, { enabled: state });
+    } catch (e) {
+      console.error(`Failed to sync toggle state for ${setCmd}:`, e);
+    }
   }
 
   async function toggle() {
     state = !state;
-    trackEl.classList.toggle('on', state);
-    trackEl.setAttribute('aria-checked', String(state));
-    await invoke(setCmd, { enabled: state });
+    localStorage.setItem(storageKey, String(state));
+    await syncState();
   }
 
   trackEl.addEventListener('click', toggle);
@@ -212,7 +217,7 @@ function setupToggle(trackEl, getCmd, setCmd) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
   });
 
-  refresh();
+  syncState();
 }
 
 // ── Password visibility toggles ───────────────────────────────────────────────

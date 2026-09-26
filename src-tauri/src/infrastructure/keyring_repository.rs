@@ -52,10 +52,11 @@ impl CredentialRepository for KeyringRepository {
             .get_password()
             .map_err(|e| PortError::Storage(format!("failed to read password: {e}")))?;
 
-        let totp_seed_raw = self
-            .entry(KEY_TOTP_SEED)?
-            .get_password()
-            .map_err(|e| PortError::Storage(format!("failed to read totp_seed: {e}")))?;
+        let totp_seed_raw = match self.entry(KEY_TOTP_SEED)?.get_password() {
+            Ok(v) => v,
+            Err(keyring::Error::NoEntry) => TOTP_ABSENT_SENTINEL.to_string(),
+            Err(e) => return Err(PortError::Storage(format!("failed to read totp_seed: {e}"))),
+        };
 
         let totp_seed: Option<String> = if totp_seed_raw == TOTP_ABSENT_SENTINEL {
             None
