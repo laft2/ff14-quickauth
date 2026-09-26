@@ -32,7 +32,18 @@ impl CredentialRepository for KeyringRepository {
     fn load(&self) -> Result<Option<Credential>, PortError> {
         let account_name = match self.entry(KEY_ACCOUNT_NAME)?.get_password() {
             Ok(v) => v,
-            Err(keyring::Error::NoEntry) => return Ok(None),
+            Err(keyring::Error::NoEntry) => {
+                // If primary service has no entry and we are using "ff14-quickauth", check legacy "ff14-companion"
+                if self.service == "ff14-quickauth" {
+                    let legacy_repo = KeyringRepository::new("ff14-companion");
+                    if let Ok(Some(legacy_cred)) = legacy_repo.load() {
+                        // Migrate credential to new service automatically
+                        let _ = self.save(&legacy_cred);
+                        return Ok(Some(legacy_cred));
+                    }
+                }
+                return Ok(None);
+            }
             Err(e) => return Err(PortError::Storage(format!("failed to read account_name: {e}"))),
         };
 

@@ -33,7 +33,7 @@ pub fn run() {
         Emitter, Manager, WindowEvent,
     };
 
-    let repo = Arc::new(KeyringRepository::new("ff14-companion"));
+    let repo = Arc::new(KeyringRepository::new("ff14-quickauth"));
     let totp_gen = Arc::new(TotpGenerator::new());
     let cred_service = Arc::new(CredentialService::new(repo));
     let totp_service = Arc::new(TotpService::new(totp_gen));
@@ -153,7 +153,7 @@ pub fn run() {
                                             "overlay",
                                             tauri::WebviewUrl::App("overlay.html".into()),
                                         )
-                                        .title("FF14 Companion Overlay")
+                                        .title("FF14 QuickAuth Overlay")
                                         .inner_size(260.0, 70.0)
                                         .position(overlay_x as f64, overlay_y as f64)
                                         .decorations(false)

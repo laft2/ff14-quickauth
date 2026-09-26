@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "ff14-companion",
+  "productName": "ff14-quickauth",
   "version": "0.1.0",
-  "identifier": "com.ff14companion.desktop",
+  "identifier": "com.ff14quickauth.desktop",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "FF14 Companion",
+        "title": "FF14 QuickAuth",
         "width": 800,
         "height": 600,
         "resizable": true,

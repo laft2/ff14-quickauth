@@ -832,7 +832,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ff14-companion"
+name = "ff14-quickauth"
 version = "0.1.0"
 dependencies = [
  "base32",

@@ -1,7 +1,7 @@
 {
-  "name": "ff14-companion",
+  "name": "ff14-quickauth",
   "version": "0.1.0",
-  "description": "FF14 Steam launcher credential companion",
+  "description": "FF14 QuickAuth credential manager",
   "private": true,
   "type": "module",
   "scripts": {
