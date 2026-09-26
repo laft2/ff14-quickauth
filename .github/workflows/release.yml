@@ -40,7 +40,7 @@ jobs:
           Write-Host "Injecting version $ver into configuration files..."
 
           (Get-Content src-tauri/tauri.conf.json) -replace '"version":\s*"[^"]+"', "`"version`": `"$ver`"" | Set-Content src-tauri/tauri.conf.json
-          (Get-Content src-tauri/Cargo.toml) -replace 'version\s*=\s*"[^"]+"', "version = `"$ver`"" | Set-Content src-tauri/Cargo.toml
+          (Get-Content src-tauri/Cargo.toml) -replace '(?m)^version\s*=\s*"[^"]+"', "version = `"$ver`"" | Set-Content src-tauri/Cargo.toml
           (Get-Content package.json) -replace '"version":\s*"[^"]+"', "`"version`": `"$ver`"" | Set-Content package.json
           (Get-Content index.html) -replace 'FF14 QuickAuth v[\d\.]+', "FF14 QuickAuth v$ver" | Set-Content index.html
 
