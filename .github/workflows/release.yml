@@ -24,11 +24,6 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Rust Cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: "src-tauri -> target"
-
       - name: Install Node dependencies
         run: npm ci
 
@@ -43,6 +38,11 @@ jobs:
           (Get-Content src-tauri/Cargo.toml) -replace '(?m)^version\s*=\s*"[^"]+"', "version = `"$ver`"" | Set-Content src-tauri/Cargo.toml
           (Get-Content package.json) -replace '"version":\s*"[^"]+"', "`"version`": `"$ver`"" | Set-Content package.json
           (Get-Content index.html) -replace 'FF14 QuickAuth v[\d\.]+', "FF14 QuickAuth v$ver" | Set-Content index.html
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri"
 
       - name: Build Tauri Application & Generate NSIS Installer (.exe)
         uses: tauri-apps/tauri-action@v0
