@@ -15,8 +15,11 @@ depends = ["build"]
 run = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register-shortcut.ps1"
 
 [tasks.uninstall]
-description = "Windowsスタートメニューからショートカットを削除します"
-run = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/unregister-shortcut.ps1"
+description = "Windowsスタートメニューおよびスタートアップフォルダからショートカットを削除します"
+run = [
+  "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/unregister-shortcut.ps1",
+  "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/unregister-startup.ps1"
+]
 
 [tasks."startup:enable"]
 description = "Windowsのスタートアップフォルダにショートカットを追加し、ログイン時自動起動を有効化します"

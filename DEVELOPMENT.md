@@ -40,11 +40,8 @@ mise run install
 ### 4. アプリのアンインストール (mise)
 
 ```bash
-# Windowsスタートメニューからショートカットを削除します
+# Windowsスタートメニューおよびスタートアップフォルダの両方からショートカットをまとめて削除します
 mise run uninstall
-
-# スタートアップフォルダから自動起動ショートカットを削除します
-mise run startup:disable
 ```
 
 * **認証情報の完全削除**:  
@@ -56,7 +53,7 @@ mise run startup:disable
 # スタートアップフォルダに自動起動ショートカットを登録（有効化）
 mise run startup:enable
 
-# スタートアップフォルダから自動起動ショートカットを削除（無効化）
+# スタートアップフォルダから自動起動ショートカットのみを削除（無効化）
 mise run startup:disable
 ```
 
@@ -74,7 +71,7 @@ mise exec -- cargo test --manifest-path src-tauri/Cargo.toml
 |---|---|---|
 | **ビルド** | `mise run build` | Tauriリリースバイナリおよびインストーラーパッケージを生成します。 |
 | **インストール / 再インストール** | `mise run install` | リリースビルドを行い、スタートメニューのショートカットを最新に更新・再インストールします。 |
-| **アンインストール** | `mise run uninstall` | スタートメニューからショートカットを削除します。 |
+| **アンインストール** | `mise run uninstall` | スタートメニューおよびスタートアップフォルダの両方からショートカットをまとめて削除します。 |
 | **自動起動の有効化** | `mise run startup:enable` | Windowsスタートアップフォルダにショートカットを登録し、ログイン時自動起動を有効化します。 |
 | **自動起動の無効化** | `mise run startup:disable` | Windowsスタートアップフォルダから自動起動ショートカットを削除します。 |
 
