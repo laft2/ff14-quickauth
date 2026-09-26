@@ -1,0 +1,62 @@
+name: "Release FF14 QuickAuth"
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish-release:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build Tauri Application & Generate NSIS Installer (.exe)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'FF14 QuickAuth ${{ github.ref_name }}'
+          releaseBody: |
+            FF14 QuickAuth の最新リリースです。
+            
+            - **インストーラー版 (`ff14-quickauth_..._x64-setup.exe`)**: ダブルクリックで簡単にインストールできます（スタートメニュー自動登録）。
+            - **ポータブル版 (`ff14-quickauth-portable.zip`)**: 解凍してすぐ使えるインストール不要版です。
+          releaseDraft: false
+          prerelease: false
+
+      - name: Create Portable Zip Package
+        shell: powershell
+        run: |
+          $exePath = "src-tauri/target/release/ff14-quickauth.exe"
+          $zipName = "ff14-quickauth-${{ github.ref_name }}-portable.zip"
+          if (Test-Path $exePath) {
+              Compress-Archive -Path $exePath -DestinationPath $zipName -Force
+              Write-Host "✅ ポータブルZipを作成しました: $zipName"
+          } else {
+              Write-Error "❌ 実行ファイルが見つかりません: $exePath"
+          }
+
+      - name: Upload Portable Zip to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ff14-quickauth-*-portable.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

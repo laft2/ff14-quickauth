@@ -58,6 +58,15 @@ mise run install
 mise run startup:enable
 ```
 
+### 📦 自動リリース配信 (GitHub Actions)
+
+バージョンタグを作成して GitHub へ Push すると、GitHub Actions がクリーンな Windows 環境で自動ビルドを行い、GitHub Releases ページへ **インストーラー版 (`.exe`)** および **ポータブル版 (`.zip`)** を自動公開します。
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
 ---
 
 ## 🏗️ アーキテクチャ
