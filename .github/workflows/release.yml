@@ -45,13 +45,23 @@ jobs:
       - name: Create Portable Zip Package
         shell: powershell
         run: |
-          $exePath = "src-tauri/target/release/ff14-quickauth.exe"
-          $zipName = "ff14-quickauth-${{ github.ref_name }}-portable.zip"
-          if (Test-Path $exePath) {
-              Compress-Archive -Path $exePath -DestinationPath $zipName -Force
-              Write-Host "✅ ポータブルZipを作成しました: $zipName"
+          $candidates = @(
+            "src-tauri/target/release/ff14-quickauth.exe",
+            "src-tauri/target/x86_64-pc-windows-msvc/release/ff14-quickauth.exe"
+          )
+          $found = $null
+          foreach ($p in $candidates) {
+              if (Test-Path $p) {
+                  $found = $p
+                  break
+              }
+          }
+          if ($found) {
+              $zipName = "ff14-quickauth-${{ github.ref_name }}-portable.zip"
+              Compress-Archive -Path $found -DestinationPath $zipName -Force
+              Write-Host "Created Portable Zip: $zipName from $found"
           } else {
-              Write-Error "❌ 実行ファイルが見つかりません: $exePath"
+              Write-Error "Executable binary not found in release target paths."
           }
 
       - name: Upload Portable Zip to GitHub Release
