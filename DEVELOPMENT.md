@@ -30,28 +30,50 @@ npm install
 npm run dev
 ```
 
-### 3. リリースバイナリのビルドとスタートメニュー登録
+### 3. アプリのビルド・インストール・再インストール (mise)
 
 ```bash
-# アプリをリリースビルドし、スタートメニューに登録します
+# アプリをリリースビルドし、Windowsスタートメニューに登録/上書き更新（再インストール）します
 mise run install
 ```
 
-### 4. Windows ログイン時自動起動のテスト
+### 4. アプリのアンインストール (mise)
 
 ```bash
-# スタートアップフォルダに自動起動ショートカットを登録
-mise run startup:enable
+# Windowsスタートメニューからショートカットを削除します
+mise run uninstall
 
-# 自動起動ショートカットの解除
+# スタートアップフォルダから自動起動ショートカットを削除します
 mise run startup:disable
 ```
 
-### 5. 単体テストの実行
+### 5. Windows ログイン時自動起動の切り替え (mise)
+
+```bash
+# スタートアップフォルダに自動起動ショートカットを登録（有効化）
+mise run startup:enable
+
+# スタートアップフォルダから自動起動ショートカットを削除（無効化）
+mise run startup:disable
+```
+
+### 6. 単体テストの実行
 
 ```bash
 mise exec -- cargo test --manifest-path src-tauri/Cargo.toml
 ```
+
+---
+
+## 🛠️ `mise` CLI タスク一覧
+
+| 操作 | コマンド | 説明 |
+|---|---|---|
+| **ビルド** | `mise run build` | Tauriリリースバイナリおよびインストーラーパッケージを生成します。 |
+| **インストール / 再インストール** | `mise run install` | リリースビルドを行い、スタートメニューのショートカットを最新に更新・再インストールします。 |
+| **アンインストール** | `mise run uninstall` | スタートメニューからショートカットを削除します。 |
+| **自動起動の有効化** | `mise run startup:enable` | Windowsスタートアップフォルダにショートカットを登録し、ログイン時自動起動を有効化します。 |
+| **自動起動の無効化** | `mise run startup:disable` | Windowsスタートアップフォルダから自動起動ショートカットを削除します。 |
 
 ---
 
