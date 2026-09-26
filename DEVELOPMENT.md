@@ -47,6 +47,9 @@ mise run uninstall
 mise run startup:disable
 ```
 
+* **認証情報の完全削除**:  
+  アプリ画面内の **「🗑（削除）」** ボタンを押すか、Windowsの「資格情報マネージャー ➜ Windows 資格情報」から `ff14-quickauth` エントリを削除します。
+
 ### 5. Windows ログイン時自動起動の切り替え (mise)
 
 ```bash
