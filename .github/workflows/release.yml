@@ -43,6 +43,7 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: "src-tauri"
+          shared-key: "release-cache"
 
       - name: Build Tauri Application & Generate NSIS Installer (.exe)
         uses: tauri-apps/tauri-action@v0
