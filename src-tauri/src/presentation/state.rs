@@ -16,10 +16,11 @@ impl AppState {
         credential_service: Arc<CredentialService>,
         totp_service: Arc<TotpService>,
     ) -> Self {
+        let initial_settings = crate::infrastructure::settings::load_settings();
         Self {
             credential_service,
             totp_service,
-            auto_submit: std::sync::atomic::AtomicBool::new(false),
+            auto_submit: std::sync::atomic::AtomicBool::new(initial_settings.auto_submit),
         }
     }
 }

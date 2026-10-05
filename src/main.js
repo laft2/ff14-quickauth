@@ -210,18 +210,31 @@ function setupToggle(trackEl, getCmd, setCmd) {
   }
 
   async function init() {
+    let fetched = null;
     try {
-      const fetched = await invoke(getCmd);
-      if (typeof fetched === 'boolean') {
-        state = fetched;
-      } else {
-        const saved = localStorage.getItem(storageKey);
-        state = saved !== null ? saved === 'true' : false;
-      }
-    } catch {
-      const saved = localStorage.getItem(storageKey);
-      state = saved !== null ? saved === 'true' : false;
+      fetched = await invoke(getCmd);
+    } catch (e) {
+      console.warn(`Failed to invoke ${getCmd}:`, e);
     }
+
+    const saved = localStorage.getItem(storageKey);
+
+    // If backend returned true, use it.
+    // If backend returned false but localStorage previously had 'true' (e.g. before settings.json existed),
+    // migrate localStorage value into backend.
+    if (typeof fetched === 'boolean') {
+      if (!fetched && storageKey === 'auto_submit' && saved === 'true') {
+        state = true;
+        await syncState();
+      } else {
+        state = fetched;
+      }
+    } else {
+      state = saved !== null ? saved === 'true' : false;
+      await syncState();
+    }
+
+    localStorage.setItem(storageKey, String(state));
     trackEl.classList.toggle('on', state);
     trackEl.setAttribute('aria-checked', String(state));
   }

@@ -122,8 +122,12 @@ pub fn get_auto_submit(state: State<AppState>) -> bool {
 }
 
 #[tauri::command]
-pub fn set_auto_submit(state: State<AppState>, enabled: bool) {
+pub fn set_auto_submit(state: State<AppState>, enabled: bool) -> Result<(), String> {
     state.auto_submit.store(enabled, Ordering::Relaxed);
+    let settings = crate::infrastructure::settings::AppSettings {
+        auto_submit: enabled,
+    };
+    crate::infrastructure::settings::save_settings(&settings)
 }
 
 #[tauri::command]
