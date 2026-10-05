@@ -21,8 +21,8 @@ pub fn run() {
     };
     use crate::presentation::{
         commands::{
-            delete_credential, generate_totp, get_auto_submit, get_credential, parse_totp_input,
-            save_credential, set_auto_submit, trigger_autofill,
+            delete_credential, generate_totp, get_auto_submit, get_autostart, get_credential,
+            parse_totp_input, save_credential, set_auto_submit, set_autostart, trigger_autofill,
         },
         state::AppState,
     };
@@ -48,6 +48,8 @@ pub fn run() {
             generate_totp,
             get_auto_submit,
             set_auto_submit,
+            get_autostart,
+            set_autostart,
             trigger_autofill,
             parse_totp_input,
         ])

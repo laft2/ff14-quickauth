@@ -126,6 +126,31 @@ pub fn set_auto_submit(state: State<AppState>, enabled: bool) {
     state.auto_submit.store(enabled, Ordering::Relaxed);
 }
 
+#[tauri::command]
+pub fn get_autostart() -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        crate::infrastructure::win32::autostart::is_autostart_enabled()
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        false
+    }
+}
+
+#[tauri::command]
+pub fn set_autostart(enabled: bool) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        crate::infrastructure::win32::autostart::set_autostart_enabled(enabled)
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = enabled;
+        Ok(())
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ParsedTotpAccountDto {
     pub secret_base32: String,

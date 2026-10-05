@@ -193,8 +193,7 @@ function switchTab(activeId) {
 // ── Toggle switch ─────────────────────────────────────────────────────────────
 function setupToggle(trackEl, getCmd, setCmd) {
   const storageKey = setCmd.replace(/^set_/, '');
-  const saved = localStorage.getItem(storageKey);
-  let state = saved !== null ? saved === 'true' : false;
+  let state = false;
 
   async function syncState() {
     trackEl.classList.toggle('on', state);
@@ -204,6 +203,23 @@ function setupToggle(trackEl, getCmd, setCmd) {
     } catch (e) {
       console.error(`Failed to sync toggle state for ${setCmd}:`, e);
     }
+  }
+
+  async function init() {
+    try {
+      const fetched = await invoke(getCmd);
+      if (typeof fetched === 'boolean') {
+        state = fetched;
+      } else {
+        const saved = localStorage.getItem(storageKey);
+        state = saved !== null ? saved === 'true' : false;
+      }
+    } catch {
+      const saved = localStorage.getItem(storageKey);
+      state = saved !== null ? saved === 'true' : false;
+    }
+    trackEl.classList.toggle('on', state);
+    trackEl.setAttribute('aria-checked', String(state));
   }
 
   async function toggle() {
@@ -217,7 +233,7 @@ function setupToggle(trackEl, getCmd, setCmd) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
   });
 
-  syncState();
+  init();
 }
 
 // ── Password visibility toggles ───────────────────────────────────────────────
@@ -364,8 +380,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupCopyTotp();
   setupQrScanner();
 
-  // Auto-submit toggle
+  // Auto-submit & Autostart toggles
   setupToggle(el('toggle-auto-submit'), 'get_auto_submit', 'set_auto_submit');
+  setupToggle(el('toggle-autostart'), 'get_autostart', 'set_autostart');
 
   // Load saved credential
   await loadCredential();
