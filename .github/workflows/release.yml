@@ -1,12 +1,25 @@
 name: "Release FF14 QuickAuth"
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'バージョンの上げ方 (semver)'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+
+# リリース処理を直列化し、同時実行によるバージョン衝突を防ぐ
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   publish-release:
+    if: github.ref == 'refs/heads/main'
     permissions:
       contents: write
     runs-on: windows-latest
@@ -14,6 +27,28 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 既存タグを取得するため
+
+      - name: Compute Next Version
+        id: ver
+        shell: pwsh
+        run: |
+          $latest = git tag --list 'v*' --sort=-v:refname | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' } | Select-Object -First 1
+          if (-not $latest) { $latest = 'v0.0.0' }
+          $parts = ($latest -replace '^v', '').Split('.') | ForEach-Object { [int]$_ }
+          switch ('${{ inputs.bump }}') {
+            'major' { $next = "$($parts[0] + 1).0.0" }
+            'minor' { $next = "$($parts[0]).$($parts[1] + 1).0" }
+            default { $next = "$($parts[0]).$($parts[1]).$($parts[2] + 1)" }
+          }
+          if (git tag --list "v$next") {
+            Write-Error "Tag v$next already exists."
+            exit 1
+          }
+          Write-Host "Latest: $latest -> Next: v$next (${{ inputs.bump }})"
+          "version=$next"  >> $env:GITHUB_OUTPUT
+          "tag=v$next"     >> $env:GITHUB_OUTPUT
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -27,11 +62,10 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Inject Version from Git Tag
+      - name: Inject Computed Version
         shell: powershell
         run: |
-          $tag = "${{ github.ref_name }}"
-          $ver = $tag -replace '^v', ''
+          $ver = "${{ steps.ver.outputs.version }}"
           Write-Host "Injecting version $ver into configuration files..."
 
           (Get-Content src-tauri/tauri.conf.json) -replace '"version":\s*"[^"]+"', "`"version`": `"$ver`"" | Set-Content src-tauri/tauri.conf.json
@@ -50,8 +84,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'FF14 QuickAuth ${{ github.ref_name }}'
+          tagName: ${{ steps.ver.outputs.tag }}
+          releaseName: 'FF14 QuickAuth ${{ steps.ver.outputs.tag }}'
+          releaseCommitish: ${{ github.sha }}
           releaseBody: |
             FF14 QuickAuth の最新リリースです。
             
@@ -75,7 +110,7 @@ jobs:
               }
           }
           if ($found) {
-              $zipName = "ff14-quickauth-${{ github.ref_name }}-portable.zip"
+              $zipName = "ff14-quickauth-${{ steps.ver.outputs.tag }}-portable.zip"
               Compress-Archive -Path $found -DestinationPath $zipName -Force
               Write-Host "Created Portable Zip: $zipName from $found"
           } else {
@@ -85,6 +120,7 @@ jobs:
       - name: Upload Portable Zip to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.ver.outputs.tag }}
           files: ff14-quickauth-*-portable.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
