@@ -21,8 +21,9 @@ pub fn run() {
     };
     use crate::presentation::{
         commands::{
-            delete_credential, generate_totp, get_auto_submit, get_autostart, get_credential,
-            parse_totp_input, save_credential, set_auto_submit, set_autostart, trigger_autofill,
+            check_for_update, delete_credential, generate_totp, get_auto_submit, get_autostart,
+            get_credential, install_update, parse_totp_input, save_credential, set_auto_submit,
+            set_autostart, trigger_autofill,
         },
         state::AppState,
     };
@@ -40,6 +41,7 @@ pub fn run() {
     let app_state = AppState::new(cred_service, totp_service);
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             get_credential,
@@ -52,6 +54,8 @@ pub fn run() {
             set_autostart,
             trigger_autofill,
             parse_totp_input,
+            check_for_update,
+            install_update,
         ])
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {

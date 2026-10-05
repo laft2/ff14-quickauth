@@ -32,6 +32,10 @@ async function invoke(cmd, args) {
     generate_totp: () => ({ code: '123456', remaining_seconds: 20 }),
     get_auto_submit: () => false,
     set_auto_submit: () => undefined,
+    get_autostart: () => false,
+    set_autostart: () => undefined,
+    check_for_update: () => ({ should_update: false, version: null, body: null }),
+    install_update: () => undefined,
     parse_totp_input: () => [
       { secret_base32: 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ', name: 'FF14 Main', issuer: 'Square Enix' }
     ],
@@ -361,6 +365,54 @@ function setupQrScanner() {
   });
 }
 
+// ── Updater UI ────────────────────────────────────────────────────────────────
+function setupUpdaterUI() {
+  const btnCheck = el('btn-check-update');
+  const btnDoUpdate = el('btn-do-update');
+  const statusText = el('update-status-text');
+  const actionBox = el('update-action-box');
+  const bannerTitle = el('update-banner-title');
+  const bannerBody = el('update-banner-body');
+
+  async function check(manual = false) {
+    if (manual) statusText.textContent = '更新を確認中...';
+    try {
+      const res = /** @type {{should_update: boolean, version?: string, body?: string}} */ (
+        await invoke('check_for_update')
+      );
+      if (res && res.should_update) {
+        statusText.textContent = `新しいバージョン (v${res.version}) が利用可能です`;
+        bannerTitle.textContent = `🎉 バージョン v${res.version} が利用可能です！`;
+        bannerBody.textContent = res.body || '最新のアップデートがリリースされています。';
+        actionBox.style.display = 'block';
+      } else {
+        if (manual) statusText.textContent = 'お使いのバージョンは最新です';
+        actionBox.style.display = 'none';
+      }
+    } catch (e) {
+      if (manual) statusText.textContent = `更新確認エラー: ${e}`;
+      console.warn('Update check failed:', e);
+    }
+  }
+
+  btnCheck.addEventListener('click', () => check(true));
+
+  btnDoUpdate.addEventListener('click', async () => {
+    btnDoUpdate.disabled = true;
+    btnDoUpdate.textContent = '⏳ ダウンロード＆アップデート中...';
+    try {
+      await invoke('install_update');
+    } catch (e) {
+      btnDoUpdate.disabled = false;
+      btnDoUpdate.textContent = '⚡️ 今すぐアップデートして再起動';
+      alert(`アップデートに失敗しました: ${e}`);
+    }
+  });
+
+  // Automatically check on launch
+  setTimeout(() => check(false), 2000);
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   // Tab navigation
@@ -383,6 +435,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Auto-submit & Autostart toggles
   setupToggle(el('toggle-auto-submit'), 'get_auto_submit', 'set_auto_submit');
   setupToggle(el('toggle-autostart'), 'get_autostart', 'set_autostart');
+
+  // Updater UI
+  setupUpdaterUI();
 
   // Load saved credential
   await loadCredential();

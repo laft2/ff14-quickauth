@@ -176,6 +176,33 @@
 
           <div class="divider"></div>
 
+          <div style="margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div>
+                <strong style="display:block;color:var(--text-primary);font-size:14px;margin-bottom:2px;">
+                  アプリケーション更新
+                </strong>
+                <span style="font-size:12px;color:var(--text-muted);" id="update-status-text">
+                  最新バージョンを確認できます
+                </span>
+              </div>
+              <button class="btn btn--ghost" id="btn-check-update" style="font-size:12px;padding:6px 14px;">
+                🔄 更新を確認
+              </button>
+            </div>
+            <div id="update-action-box" style="display:none;margin-top:12px;padding:12px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:8px;">
+              <div style="font-size:13px;font-weight:600;color:var(--c-gold-400);margin-bottom:6px;" id="update-banner-title">
+                🎉 新しいバージョンが利用可能です！
+              </div>
+              <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;" id="update-banner-body"></div>
+              <button class="btn btn--primary btn--full" id="btn-do-update" style="font-size:12px;padding:8px 16px;">
+                ⚡️ 今すぐアップデートして再起動
+              </button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
           <div style="font-size:12px;color:var(--text-muted);line-height:1.7;">
             <p style="margin-bottom:8px;">
               📁 認証情報は <strong style="color:var(--text-secondary);">Windows 資格情報マネージャー (DPAPI)</strong>

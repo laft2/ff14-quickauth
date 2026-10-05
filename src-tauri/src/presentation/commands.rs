@@ -152,6 +152,54 @@ pub fn set_autostart(enabled: bool) -> Result<(), String> {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct UpdateCheckResultDto {
+    pub should_update: bool,
+    pub version: Option<String>,
+    pub body: Option<String>,
+}
+
+#[tauri::command]
+pub async fn check_for_update(app: tauri::AppHandle) -> Result<UpdateCheckResultDto, String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let updater = app.updater().map_err(|e| e.to_string())?;
+    match updater.check().await {
+        Ok(Some(update)) => Ok(UpdateCheckResultDto {
+            should_update: true,
+            version: Some(update.version),
+            body: update.body,
+        }),
+        Ok(None) => Ok(UpdateCheckResultDto {
+            should_update: false,
+            version: None,
+            body: None,
+        }),
+        Err(e) => Err(format!("更新チェックエラー: {e}")),
+    }
+}
+
+#[tauri::command]
+pub async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let updater = app.updater().map_err(|e| e.to_string())?;
+    if let Some(update) = updater.check().await.map_err(|e| e.to_string())? {
+        let mut downloaded = 0;
+        update
+            .download_and_install(
+                |chunk_length, content_length| {
+                    downloaded += chunk_length;
+                    let _ = (downloaded, content_length);
+                },
+                || {},
+            )
+            .await
+            .map_err(|e| format!("アップデートインストール失敗: {e}"))?;
+
+        app.restart();
+    }
+    Ok(())
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ParsedTotpAccountDto {
     pub secret_base32: String,
     pub name: Option<String>,
