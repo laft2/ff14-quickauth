@@ -25,6 +25,7 @@
   },
   "plugins": {
     "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDY1QTU3Njg0ODdEMkIwNTUKUldSVnNOS0hoSGFsWlFxRWxwQi9BU3ZBV3hTQVZJdnlYRGx0UUY5ZXlLa3BRaWVscndmdkw3cmUK",
       "endpoints": [
         "https://github.com/laft2/ff14-quickauth/releases/latest/download/latest.json"
       ]

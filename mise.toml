@@ -29,3 +29,9 @@ run = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register-star
 description = "Windowsのスタートアップフォルダからショートカットを削除し、ログイン時自動起動を無効化します"
 run = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/unregister-startup.ps1"
 
+[tasks."tauri:generate-key"]
+description = "Tauri自動アップデート用の署名鍵ペアを生成します (tauri-key.key)"
+run = "cargo tauri signer generate -w tauri-key.key"
+
+
+

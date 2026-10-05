@@ -74,6 +74,7 @@ mise exec -- cargo test --manifest-path src-tauri/Cargo.toml
 | **アンインストール** | `mise run uninstall` | スタートメニューおよびスタートアップフォルダの両方からショートカットをまとめて削除します。 |
 | **自動起動の有効化** | `mise run startup:enable` | Windowsスタートアップフォルダにショートカットを登録し、ログイン時自動起動を有効化します。 |
 | **自動起動の無効化** | `mise run startup:disable` | Windowsスタートアップフォルダから自動起動ショートカットを削除します。 |
+| **署名鍵の生成** | `mise run tauri:generate-key` | Tauri自動アップデート用の署名鍵ペア（`tauri-key.key`）を生成します。 |
 
 ---
 
