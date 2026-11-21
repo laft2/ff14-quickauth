@@ -184,6 +184,7 @@ pub fn run() {
                                     .position(x as f64, y as f64)
                                     .decorations(false)
                                     .transparent(true)
+                                    .shadow(false)
                                     .always_on_top(true)
                                     .resizable(false)
                                     .focused(false)

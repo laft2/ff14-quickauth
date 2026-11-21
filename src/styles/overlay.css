@@ -1,5 +1,5 @@
 :root {
-  --c-bg: rgba(15, 23, 42, 0.88);
+  --c-bg: #0f172a;
   --c-border: rgba(245, 158, 11, 0.4);
   --c-gold-400: #fbbf24;
 }
@@ -14,8 +14,6 @@ body {
   height: 100vh;
   box-sizing: border-box;
   background: var(--c-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--c-border);
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 0 15px rgba(245, 158, 11, 0.2);
